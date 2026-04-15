@@ -62,20 +62,7 @@ const App = {
             </button>
           </form>
 
-          <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border-color);">
-            <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-bottom:8px;">Demo Credentials:</p>
-            <div style="display:grid; gap:6px; font-size:0.73rem; color:var(--text-muted);">
-              <div style="display:flex; justify-content:space-between; padding:6px 10px; background:var(--bg-glass); border-radius:6px;">
-                <span>👤 Warga</span><span>ahmad / user123</span>
-              </div>
-              <div style="display:flex; justify-content:space-between; padding:6px 10px; background:var(--bg-glass); border-radius:6px;">
-                <span>🔒 Admin</span><span>admin / admin123</span>
-              </div>
-              <div style="display:flex; justify-content:space-between; padding:6px 10px; background:var(--bg-glass); border-radius:6px;">
-                <span>🧹 Petugas</span><span>joko / petugas123</span>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     `;
