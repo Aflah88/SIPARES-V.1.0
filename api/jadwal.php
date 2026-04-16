@@ -108,10 +108,11 @@ function handlePut() {
             jsonResponse(['success' => false, 'message' => 'Petugas hanya dapat mengubah status menjadi submitted'], 403);
         }
         $bukti = isset($data['bukti']) ? json_encode($data['bukti']) : null;
+        $keterangan = $data['keterangan'] ?? null;
         $completed_by = $user['id'];
         
-        $stmt = $db->prepare("UPDATE jadwal SET status = ?, bukti = ?, completed_by = ? WHERE id = ?");
-        $stmt->execute([$status, $bukti, $completed_by, $id]);
+        $stmt = $db->prepare("UPDATE jadwal SET status = ?, bukti = ?, keterangan = ?, completed_by = ? WHERE id = ?");
+        $stmt->execute([$status, $bukti, $keterangan, $completed_by, $id]);
     } else {
         // Admin verification
         $stmt = $db->prepare("UPDATE jadwal SET status = ? WHERE id = ?");

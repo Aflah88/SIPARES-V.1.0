@@ -27,7 +27,7 @@ CREATE TABLE transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     bulan VARCHAR(30) NOT NULL,
-    jumlah INT NOT NULL DEFAULT 25000,
+    jumlah INT NOT NULL DEFAULT 20000,
     tanggal DATE NOT NULL,
     status ENUM('pending','verified','rejected') NOT NULL DEFAULT 'pending',
     bukti VARCHAR(255) DEFAULT NULL,
@@ -41,9 +41,22 @@ CREATE TABLE jadwal (
     tanggal DATE NOT NULL UNIQUE,
     status ENUM('pending','submitted','verified','rejected') NOT NULL DEFAULT 'pending',
     bukti TEXT DEFAULT NULL,
+    keterangan TEXT DEFAULT NULL,
     completed_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (completed_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ── Complaints (Komplain) ──
+CREATE TABLE complaints (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    subjek VARCHAR(150) NOT NULL,
+    pesan TEXT NOT NULL,
+    status ENUM('pending','ditanggapi','selesai') NOT NULL DEFAULT 'pending',
+    balasan TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ── Settings (Konfigurasi Global) ──
@@ -80,15 +93,15 @@ INSERT INTO users (nama, username, password, phone, role) VALUES
 -- Transactions (user_id references the auto-increment IDs above)
 -- Admin=1, Ahmad=2, Siti=3, Budi=4, Dewi=5, Eko=6, Joko=7, Sumarno=8
 INSERT INTO transactions (user_id, bulan, jumlah, tanggal, status) VALUES
-(2, 'Januari 2026', 25000, '2026-01-05', 'verified'),
-(2, 'Februari 2026', 25000, '2026-02-03', 'verified'),
-(2, 'Maret 2026', 25000, '2026-03-04', 'verified'),
-(3, 'Januari 2026', 25000, '2026-01-10', 'verified'),
-(3, 'Februari 2026', 25000, '2026-02-08', 'pending'),
-(4, 'Januari 2026', 25000, '2026-01-15', 'verified'),
-(4, 'Febrari 2026', 25000, '2026-02-12', 'rejected'),
-(5, 'Maret 2026', 25000, '2026-03-07', 'pending'),
-(6, 'Maret 2026', 25000, '2026-03-10', 'pending');
+(2, 'Januari 2026', 20000, '2026-01-05', 'verified'),
+(2, 'Februari 2026', 20000, '2026-02-03', 'verified'),
+(2, 'Maret 2026', 20000, '2026-03-04', 'verified'),
+(3, 'Januari 2026', 20000, '2026-01-10', 'verified'),
+(3, 'Februari 2026', 20000, '2026-02-08', 'pending'),
+(4, 'Januari 2026', 20000, '2026-01-15', 'verified'),
+(4, 'Febrari 2026', 20000, '2026-02-12', 'rejected'),
+(5, 'Maret 2026', 20000, '2026-03-07', 'pending'),
+(6, 'Maret 2026', 20000, '2026-03-10', 'pending');
 
 -- Jadwal (Global Schedule)
 INSERT INTO jadwal (tanggal, status, completed_by) VALUES

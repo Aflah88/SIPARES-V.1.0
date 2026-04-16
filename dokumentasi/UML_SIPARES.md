@@ -11,15 +11,20 @@ graph LR
     subgraph SIPARES["🏢 Sistem SIPARES"]
         UC1["🔐 Login"]
         UC2["🔓 Logout"]
+        UC20["📝 Registrasi Akun"]
         UC3["💳 Bayar Retribusi via QRIS"]
         UC4["📤 Upload Bukti Pembayaran"]
         UC5["📊 Lihat Dashboard"]
         UC6["📋 Lihat Riwayat Transaksi"]
-        UC7["👤 Lihat Profil"]
+        UC7["👤 Lihat & Edit Profil"]
+        UC21["💬 Kirim Komplain"]
+        UC22["📋 Lihat Status Komplain"]
         UC8["📅 Lihat Jadwal Pengambilan"]
         UC9["✅ Konfirmasi Penyelesaian Tugas"]
         UC10["📤 Upload Bukti Tugas"]
         UC11["📋 Lihat Riwayat Tugas"]
+        UC23["👤 Lihat & Edit Profil Petugas"]
+        UC24["💬 Kirim Komplain Petugas"]
         UC12["✔️ Verifikasi Pembayaran Warga"]
         UC13["👥 Kelola Data Warga (CRUD)"]
         UC14["🧹 Kelola Data Petugas (CRUD)"]
@@ -28,12 +33,14 @@ graph LR
         UC17["📊 Lihat Laporan Transaksi"]
         UC18["⚙️ Pengaturan QRIS"]
         UC19["📤 Upload Gambar QRIS"]
+        UC25["📩 Kelola Komplain Masuk"]
     end
 
     W["🏘️ Warga"]
     P["🧹 Petugas Kebersihan"]
     A["🔒 Admin"]
 
+    W --- UC20
     W --- UC1
     W --- UC2
     W --- UC3
@@ -41,6 +48,8 @@ graph LR
     W --- UC5
     W --- UC6
     W --- UC7
+    W --- UC21
+    W --- UC22
 
     P --- UC1
     P --- UC2
@@ -48,6 +57,9 @@ graph LR
     P --- UC9
     P --- UC10
     P --- UC11
+    P --- UC23
+    P --- UC24
+    P --- UC22
 
     A --- UC1
     A --- UC2
@@ -59,6 +71,7 @@ graph LR
     A --- UC17
     A --- UC18
     A --- UC19
+    A --- UC25
 
     UC3 -.->|include| UC4
     UC9 -.->|include| UC10
@@ -71,23 +84,29 @@ graph LR
 |----|----------|-------|-----------|
 | UC1 | Login | Semua | Masuk ke sistem dengan username, password, dan role |
 | UC2 | Logout | Semua | Keluar dari sistem |
-| UC3 | Bayar Retribusi via QRIS | Warga | Melakukan pembayaran retribusi sampah Rp 25.000/bulan |
+| UC20 | Registrasi Akun | Warga | Mendaftar akun warga baru dari halaman login |
+| UC3 | Bayar Retribusi via QRIS | Warga | Melakukan pembayaran retribusi sampah Rp 20.000/bulan |
 | UC4 | Upload Bukti Pembayaran | Warga | Mengunggah bukti pembayaran (JPG/PNG/WebP/PDF) |
 | UC5 | Lihat Dashboard | Warga | Melihat ringkasan pembayaran dan status bulan ini |
 | UC6 | Lihat Riwayat Transaksi | Warga | Melihat seluruh riwayat pembayaran |
-| UC7 | Lihat Profil | Warga | Melihat informasi profil pribadi |
+| UC7 | Lihat & Edit Profil | Warga | Melihat dan mengubah informasi profil pribadi |
+| UC21 | Kirim Komplain | Warga | Mengirim komplain/keluhan ke admin |
+| UC22 | Lihat Status Komplain | Warga, Petugas | Melihat riwayat dan status komplain serta balasan admin |
 | UC8 | Lihat Jadwal Pengambilan | Petugas | Melihat daftar jadwal tugas pengambilan sampah |
 | UC9 | Konfirmasi Penyelesaian Tugas | Petugas | Menandai tugas sebagai selesai dan upload bukti |
 | UC10 | Upload Bukti Tugas | Petugas | Mengunggah foto/PDF bukti tugas selesai |
 | UC11 | Lihat Riwayat Tugas | Petugas | Melihat riwayat tugas yang sudah diselesaikan |
+| UC23 | Lihat & Edit Profil Petugas | Petugas | Melihat dan mengubah informasi profil petugas |
+| UC24 | Kirim Komplain Petugas | Petugas | Mengirim komplain/keluhan ke admin |
 | UC12 | Verifikasi Pembayaran | Admin | Menyetujui atau menolak pembayaran warga |
 | UC13 | Kelola Data Warga | Admin | CRUD data warga (tambah, edit, hapus) |
-| UC14 | Kelola Data Petugas | Admin | CRUD data petugas kebersihan |
+| UC14 | Kelola Data Petugas | Admin | CRUD data petugas kebersihan (tambah, edit, hapus) |
 | UC15 | Kelola Jadwal Pengambilan | Admin | Membuat jadwal pengambilan sampah baru |
 | UC16 | Validasi Bukti Tugas | Admin | Menyetujui/menolak laporan tugas petugas |
 | UC17 | Lihat Laporan Transaksi | Admin | Melihat semua transaksi dengan filter |
 | UC18 | Pengaturan QRIS | Admin | Mengelola gambar QRIS pembayaran |
 | UC19 | Upload Gambar QRIS | Admin | Mengunggah gambar QRIS baru |
+| UC25 | Kelola Komplain Masuk | Admin | Melihat, membalas, dan mengubah status komplain |
 
 ---
 
@@ -95,7 +114,36 @@ graph LR
 
 ### 2.1 Sequence Diagram — Warga
 
-#### A. Login Warga
+#### A. Registrasi Akun Warga
+
+```mermaid
+sequenceDiagram
+    actor W as Warga
+    participant FE as Frontend (Browser)
+    participant API as API Register (register.php)
+    participant DB as Database MySQL
+
+    W->>FE: Buka halaman SIPARES
+    FE-->>W: Tampilkan form login
+    W->>FE: Klik "Buat Akun Warga"
+    FE-->>W: Tampilkan form registrasi
+
+    W->>FE: Isi nama, username, password, phone, RT, RW, alamat
+    W->>FE: Klik tombol "Daftar"
+    FE->>API: POST register.php {nama, username, password, phone, rt, rw, alamat}
+    API->>API: Validasi semua field wajib
+    API->>API: Cek panjang password >= 6
+    API->>DB: SELECT id FROM users WHERE username=?
+    DB-->>API: Tidak ada duplikasi
+
+    API->>API: password_hash(password)
+    API->>DB: INSERT INTO users (nama, username, password, phone, rt, rw, alamat, role='user')
+    DB-->>API: OK (new ID)
+    API-->>FE: {success: true, message: 'Registrasi berhasil!'}
+    FE-->>W: Notifikasi sukses + redirect ke form login
+```
+
+#### B. Login Warga
 
 ```mermaid
 sequenceDiagram
@@ -122,7 +170,7 @@ sequenceDiagram
     FE-->>W: Tampilkan Dashboard Warga
 ```
 
-#### B. Pembayaran Retribusi QRIS
+#### C. Pembayaran Retribusi QRIS
 
 ```mermaid
 sequenceDiagram
@@ -151,7 +199,7 @@ sequenceDiagram
     UPLOAD->>UPLOAD: Simpan file ke /uploads/
     UPLOAD-->>FE: {success: true, data: {path: 'uploads/bukti_xxx.jpg'}}
 
-    FE->>TRX: POST transactions.php {bulan, jumlah: 25000, tanggal, bukti}
+    FE->>TRX: POST transactions.php {bulan, jumlah: 20000, tanggal, bukti}
     TRX->>DB: Cek duplikasi bulan (status != rejected)
     DB-->>TRX: Tidak ada duplikasi
     TRX->>DB: INSERT INTO transactions (...)
@@ -160,35 +208,60 @@ sequenceDiagram
     FE-->>W: Notifikasi sukses + redirect ke Dashboard
 ```
 
-#### C. Lihat Riwayat Transaksi
+#### D. Kirim Komplain
 
 ```mermaid
 sequenceDiagram
     actor W as Warga
     participant FE as Frontend (Browser)
-    participant API as API Transaksi (transactions.php)
+    participant API as API Complaints (complaints.php)
     participant DB as Database MySQL
 
-    W->>FE: Klik menu "Riwayat Transaksi"
-    FE->>API: GET transactions.php
-    API->>API: requireAuth() → cek session
-    API->>API: role=user → filter user_id = session.id
-    API->>DB: SELECT t.*, u.nama FROM transactions t JOIN users u ON t.user_id=u.id WHERE t.user_id=?
-    DB-->>API: Daftar transaksi milik warga
+    W->>FE: Klik menu "Komplain"
+    FE->>API: GET complaints.php
+    API->>API: requireAuth() → filter user_id = session.id
+    API->>DB: SELECT c.*, u.nama FROM complaints c JOIN users u ON c.user_id=u.id WHERE c.user_id=?
+    DB-->>API: Daftar komplain milik warga
     API-->>FE: {success: true, data: [...]}
-    FE-->>W: Tampilkan tabel riwayat (ID, Periode, Jumlah, Tanggal, Status)
+    FE-->>W: Tampilkan form + riwayat komplain
+
+    W->>FE: Isi subjek dan pesan komplain
+    W->>FE: Klik "Kirim Komplain"
+    FE->>API: POST complaints.php {subjek, pesan}
+    API->>API: requireAuth(['user', 'petugas'])
+    API->>DB: INSERT INTO complaints (user_id, subjek, pesan)
+    DB-->>API: OK (new ID)
+    API-->>FE: {success: true, message: 'Komplain berhasil dikirim'}
+    FE-->>W: Notifikasi sukses + refresh halaman
 ```
 
-#### D. Lihat Profil
+#### E. Edit Profil Warga
 
 ```mermaid
 sequenceDiagram
     actor W as Warga
     participant FE as Frontend (Browser)
+    participant API as API Users (users.php)
+    participant DB as Database MySQL
 
     W->>FE: Klik menu "Profil Saya"
-    FE->>FE: Ambil data dari session cache (_session)
-    FE-->>W: Tampilkan profil (Nama, HP, RT, RW, Alamat, Username)
+    FE->>API: GET users.php?action=profile
+    API->>API: requireAuth() → ambil user_id dari session
+    API->>DB: SELECT id, nama, username, phone, rt, rw, alamat, role FROM users WHERE id=?
+    DB-->>API: Data profil warga
+    API-->>FE: {success: true, data: {...}}
+    FE-->>W: Tampilkan form profil (editable)
+
+    W->>FE: Ubah nama, phone, RT, RW, alamat, password (opsional)
+    W->>FE: Klik "Simpan Perubahan"
+    FE->>API: PUT users.php?action=update-profile {nama, phone, rt, rw, alamat, password?}
+    API->>API: requireAuth() → update hanya data sendiri
+    API->>DB: UPDATE users SET ... WHERE id=?
+    DB-->>API: OK
+    API->>API: Update $_SESSION['user']
+    API-->>FE: {success: true, data: updated_profile}
+    FE->>FE: Update session cache
+    FE-->>W: Notifikasi "Profil berhasil diperbarui"
 ```
 
 ---
@@ -249,22 +322,56 @@ sequenceDiagram
     FE-->>P: Notifikasi sukses "Menunggu verifikasi admin 🎉"
 ```
 
-#### C. Lihat Riwayat Tugas
+#### C. Kirim Komplain Petugas
 
 ```mermaid
 sequenceDiagram
     actor P as Petugas Kebersihan
     participant FE as Frontend (Browser)
-    participant API as API Jadwal (jadwal.php)
+    participant API as API Complaints (complaints.php)
     participant DB as Database MySQL
 
-    P->>FE: Klik menu "Riwayat Tugas"
-    FE->>API: GET jadwal.php
-    API->>DB: SELECT j.*, u.nama FROM jadwal j LEFT JOIN users u ON j.completed_by=u.id
-    DB-->>API: Daftar semua jadwal
+    P->>FE: Klik menu "Komplain"
+    FE->>API: GET complaints.php
+    API->>API: requireAuth() → filter user_id = session.id
+    API->>DB: SELECT c.*, u.nama FROM complaints c JOIN users u WHERE c.user_id=?
+    DB-->>API: Daftar komplain milik petugas
     API-->>FE: {success: true, data: [...]}
-    FE->>FE: Filter: status IN (submitted, verified, rejected) AND completed_by = session.id
-    FE-->>P: Tampilkan tabel riwayat tugas (Tanggal, Jumlah Bukti, Status)
+    FE-->>P: Tampilkan form + riwayat komplain
+
+    P->>FE: Isi subjek dan pesan komplain
+    P->>FE: Klik "Kirim Komplain"
+    FE->>API: POST complaints.php {subjek, pesan}
+    API->>DB: INSERT INTO complaints (user_id, subjek, pesan)
+    DB-->>API: OK
+    API-->>FE: {success: true}
+    FE-->>P: Notifikasi sukses
+```
+
+#### D. Edit Profil Petugas
+
+```mermaid
+sequenceDiagram
+    actor P as Petugas Kebersihan
+    participant FE as Frontend (Browser)
+    participant API as API Users (users.php)
+    participant DB as Database MySQL
+
+    P->>FE: Klik menu "Profil Saya"
+    FE->>API: GET users.php?action=profile
+    API->>DB: SELECT ... FROM users WHERE id=?
+    DB-->>API: Data profil petugas
+    API-->>FE: {success: true, data: {...}}
+    FE-->>P: Tampilkan form profil (editable)
+
+    P->>FE: Ubah nama, phone, password (opsional)
+    P->>FE: Klik "Simpan Perubahan"
+    FE->>API: PUT users.php?action=update-profile {nama, phone, password?}
+    API->>DB: UPDATE users SET ... WHERE id=?
+    DB-->>API: OK
+    API->>API: Update $_SESSION['user']
+    API-->>FE: {success: true, data: updated_profile}
+    FE-->>P: Notifikasi "Profil berhasil diperbarui"
 ```
 
 ---
@@ -312,7 +419,37 @@ sequenceDiagram
     end
 ```
 
-#### B. Kelola Data Warga (CRUD)
+#### B. Kelola Komplain Masuk
+
+```mermaid
+sequenceDiagram
+    actor A as Admin
+    participant FE as Frontend (Browser)
+    participant API as API Complaints (complaints.php)
+    participant DB as Database MySQL
+
+    A->>FE: Klik menu "Komplain Masuk"
+    FE->>API: GET complaints.php
+    API->>API: requireAuth() → role=admin → lihat semua
+    API->>DB: SELECT c.*, u.nama, u.role FROM complaints c JOIN users u ON c.user_id=u.id ORDER BY created_at DESC
+    DB-->>API: Semua komplain
+    API-->>FE: {success: true, data: [...]}
+    FE-->>A: Tampilkan statistik (pending/ditanggapi/selesai) + tabel komplain
+
+    A->>FE: Klik "Tanggapi" pada komplain
+    FE-->>A: Modal detail komplain + form balasan + select status
+
+    A->>FE: Tulis balasan + ubah status
+    A->>FE: Klik "Simpan Balasan"
+    FE->>API: PUT complaints.php?id=X {balasan, status}
+    API->>API: requireAuth(['admin'])
+    API->>DB: UPDATE complaints SET balasan=?, status=? WHERE id=?
+    DB-->>API: OK
+    API-->>FE: {success: true}
+    FE-->>A: Notifikasi "Komplain berhasil ditanggapi"
+```
+
+#### C. Kelola Data Warga (CRUD)
 
 ```mermaid
 sequenceDiagram
@@ -367,7 +504,7 @@ sequenceDiagram
     end
 ```
 
-#### C. Kelola Jadwal & Validasi Tugas Petugas
+#### D. Kelola Jadwal & Validasi Tugas Petugas
 
 ```mermaid
 sequenceDiagram
@@ -413,7 +550,7 @@ sequenceDiagram
     end
 ```
 
-#### D. Pengaturan QRIS
+#### E. Pengaturan QRIS
 
 ```mermaid
 sequenceDiagram
@@ -483,6 +620,16 @@ classDiagram
         +timestamp created_at
     }
 
+    class Complaints {
+        +int id PK
+        +int user_id FK
+        +varchar subjek
+        +text pesan
+        +enum status [pending, ditanggapi, selesai]
+        +text balasan
+        +timestamp created_at
+    }
+
     class Settings {
         +varchar key_name PK
         +text set_value
@@ -492,6 +639,10 @@ classDiagram
         +handleLogin()
         +handleLogout()
         +handleSession()
+    }
+
+    class RegisterAPI {
+        +handleRegister()
     }
 
     class TransactionsAPI {
@@ -508,9 +659,17 @@ classDiagram
 
     class UsersAPI {
         +handleGet()
+        +handleGetProfile()
         +handlePost()
         +handlePut()
+        +handleUpdateProfile()
         +handleDelete()
+    }
+
+    class ComplaintsAPI {
+        +handleGet()
+        +handlePost()
+        +handlePut()
     }
 
     class SettingsAPI {
@@ -536,17 +695,23 @@ classDiagram
         +logout()
         +checkSession()
         +getSession()
+        +register(data)
         +getUsers()
         +getPetugas()
         +getUserById(id)
         +addUser(userData)
         +updateUser(id, updates)
         +deleteUser(id)
+        +getProfile()
+        +updateProfile(updates)
         +getTransactions(filters)
         +addTransaction(data)
         +updateTransaction(id, updates)
         +getJadwal(filters)
         +updateJadwal(id, updates)
+        +getComplaints()
+        +addComplaint(data)
+        +replyComplaint(id, data)
         +uploadBukti(file)
         +getSetting(key)
         +updateSetting(key, value)
@@ -558,7 +723,9 @@ classDiagram
         +init()
         +checkAuth()
         +renderLogin()
+        +renderRegister()
         +handleLogin(event)
+        +handleRegister(event)
         +renderDashboard()
         +toggleSidebar()
         +showModal()
@@ -576,7 +743,11 @@ classDiagram
         +renderDashboard()
         +renderBayar()
         +renderRiwayat()
+        +renderKomplain()
+        +submitKomplain(event)
+        +viewKomplain(id)
         +renderProfil()
+        +saveProfile(event)
         +handleFileUpload(event)
         +submitPayment()
     }
@@ -589,6 +760,11 @@ classDiagram
         +renderContent()
         +renderJadwal()
         +renderRiwayat()
+        +renderKomplain()
+        +submitKomplain(event)
+        +viewKomplain(id)
+        +renderProfil()
+        +saveProfile(event)
         +confirmTask(jadwalId)
         +completeTask(jadwalId)
         +handleFileUpload(event)
@@ -604,6 +780,9 @@ classDiagram
         +renderPetugasManage()
         +renderLaporan()
         +renderJadwal()
+        +renderKomplain()
+        +viewKomplain(id)
+        +replyKomplain(id)
         +renderSettings()
         +approvePayment(id)
         +rejectPayment(id)
@@ -616,18 +795,23 @@ classDiagram
 
     Users "1" --> "*" Transactions : user_id
     Users "1" --> "*" Jadwal : completed_by
+    Users "1" --> "*" Complaints : user_id
     
     AuthAPI --> ConfigHelper : uses
+    RegisterAPI --> ConfigHelper : uses
     TransactionsAPI --> ConfigHelper : uses
     JadwalAPI --> ConfigHelper : uses
     UsersAPI --> ConfigHelper : uses
+    ComplaintsAPI --> ConfigHelper : uses
     SettingsAPI --> ConfigHelper : uses
     UploadAPI --> ConfigHelper : uses
 
     DataStore --> AuthAPI : calls
+    DataStore --> RegisterAPI : calls
     DataStore --> TransactionsAPI : calls
     DataStore --> JadwalAPI : calls
     DataStore --> UsersAPI : calls
+    DataStore --> ComplaintsAPI : calls
     DataStore --> SettingsAPI : calls
     DataStore --> UploadAPI : calls
 
@@ -645,17 +829,25 @@ classDiagram
 
 ## 4. 🚶 Activity Diagram
 
-### 4.1 Activity Diagram — Warga (Pembayaran Retribusi)
+### 4.1 Activity Diagram — Warga (Pembayaran, Komplain, Profil)
 
 ```mermaid
 flowchart TD
     START(("🟢 Start"))
-    LOGIN["Buka halaman SIPARES"]
+    OPEN["Buka halaman SIPARES"]
     CHECK_SESSION{"Session aktif?"}
     SHOW_LOGIN["Tampilkan form login"]
+    HAS_ACCOUNT{"Sudah punya akun?"}
+    
+    REGISTER["Tampilkan form registrasi"]
+    INPUT_REG["Isi nama, username, password, phone, RT, RW, alamat"]
+    VALIDATE_REG{"Data valid & username unik?"}
+    REG_FAIL["Tampilkan error registrasi"]
+    REG_SUCCESS["Registrasi berhasil → redirect ke login"]
+
     INPUT_CRED["Input role=Warga, username, password"]
     VALIDATE_LOGIN{"Kredensial valid?"}
-    LOGIN_FAIL["Tampilkan error 'Username/password salah'"]
+    LOGIN_FAIL["Tampilkan error login"]
     DASHBOARD["Tampilkan Dashboard Warga"]
     CHECK_MONTH{"Bulan ini sudah bayar?"}
     SHOW_WARNING["Tampilkan peringatan tagihan"]
@@ -665,28 +857,43 @@ flowchart TD
     LOAD_QRIS["Muat gambar QRIS dari server"]
     SCAN_QRIS["Scan QRIS & bayar via e-wallet"]
     UPLOAD_BUKTI["Upload bukti pembayaran"]
-    VALIDATE_FILE{"File valid? (format & ukuran)"}
+    VALIDATE_FILE{"File valid?"}
     FILE_INVALID["Tampilkan error format/ukuran"]
     SUBMIT_PAYMENT["Kirim pembayaran ke server"]
-    CHECK_DUP{"Sudah bayar bulan ini?"}
-    DUP_ERROR["Error: Sudah bayar bulan ini"]
-    PAYMENT_SUCCESS["Pembayaran berhasil dikirim (status: pending)"]
+    PAYMENT_SUCCESS["Pembayaran berhasil (status: pending)"]
 
-    RIWAYAT["Buka menu Riwayat Transaksi"]
-    LOAD_TRX["Muat transaksi dari API"]
+    RIWAYAT["Buka Riwayat Transaksi"]
     SHOW_TRX["Tampilkan tabel riwayat"]
 
-    PROFIL["Buka menu Profil Saya"]
-    SHOW_PROFIL["Tampilkan data profil"]
+    KOMPLAIN["Buka menu Komplain"]
+    INPUT_KOMPLAIN["Isi subjek dan pesan"]
+    SUBMIT_KOMPLAIN["Kirim komplain"]
+    KOMPLAIN_SUCCESS["Komplain berhasil dikirim"]
+    VIEW_KOMPLAIN["Lihat detail & balasan admin"]
+
+    PROFIL["Buka menu Profil"]
+    EDIT_PROFIL["Edit data profil"]
+    SAVE_PROFIL["Simpan perubahan profil"]
+    PROFIL_SUCCESS["Profil berhasil diperbarui"]
 
     LOGOUT["Logout"]
     STOP(("🔴 End"))
 
-    START --> LOGIN
-    LOGIN --> CHECK_SESSION
+    START --> OPEN
+    OPEN --> CHECK_SESSION
     CHECK_SESSION -->|Ya| DASHBOARD
     CHECK_SESSION -->|Tidak| SHOW_LOGIN
-    SHOW_LOGIN --> INPUT_CRED
+    SHOW_LOGIN --> HAS_ACCOUNT
+    HAS_ACCOUNT -->|Ya| INPUT_CRED
+    HAS_ACCOUNT -->|Tidak| REGISTER
+
+    REGISTER --> INPUT_REG
+    INPUT_REG --> VALIDATE_REG
+    VALIDATE_REG -->|Tidak| REG_FAIL
+    REG_FAIL --> REGISTER
+    VALIDATE_REG -->|Ya| REG_SUCCESS
+    REG_SUCCESS --> SHOW_LOGIN
+
     INPUT_CRED --> VALIDATE_LOGIN
     VALIDATE_LOGIN -->|Tidak| LOGIN_FAIL
     LOGIN_FAIL --> SHOW_LOGIN
@@ -699,28 +906,20 @@ flowchart TD
 
     CHOOSE_MENU -->|Bayar QRIS| BAYAR
     CHOOSE_MENU -->|Riwayat| RIWAYAT
+    CHOOSE_MENU -->|Komplain| KOMPLAIN
     CHOOSE_MENU -->|Profil| PROFIL
     CHOOSE_MENU -->|Logout| LOGOUT
 
-    BAYAR --> LOAD_QRIS
-    LOAD_QRIS --> SCAN_QRIS
-    SCAN_QRIS --> UPLOAD_BUKTI
-    UPLOAD_BUKTI --> VALIDATE_FILE
-    VALIDATE_FILE -->|Tidak| FILE_INVALID
-    FILE_INVALID --> UPLOAD_BUKTI
-    VALIDATE_FILE -->|Ya| SUBMIT_PAYMENT
-    SUBMIT_PAYMENT --> CHECK_DUP
-    CHECK_DUP -->|Ya| DUP_ERROR
-    DUP_ERROR --> CHOOSE_MENU
-    CHECK_DUP -->|Tidak| PAYMENT_SUCCESS
-    PAYMENT_SUCCESS --> DASHBOARD
+    BAYAR --> LOAD_QRIS --> SCAN_QRIS --> UPLOAD_BUKTI --> VALIDATE_FILE
+    VALIDATE_FILE -->|Tidak| FILE_INVALID --> UPLOAD_BUKTI
+    VALIDATE_FILE -->|Ya| SUBMIT_PAYMENT --> PAYMENT_SUCCESS --> DASHBOARD
 
-    RIWAYAT --> LOAD_TRX
-    LOAD_TRX --> SHOW_TRX
-    SHOW_TRX --> CHOOSE_MENU
+    RIWAYAT --> SHOW_TRX --> CHOOSE_MENU
 
-    PROFIL --> SHOW_PROFIL
-    SHOW_PROFIL --> CHOOSE_MENU
+    KOMPLAIN --> INPUT_KOMPLAIN --> SUBMIT_KOMPLAIN --> KOMPLAIN_SUCCESS --> CHOOSE_MENU
+    KOMPLAIN --> VIEW_KOMPLAIN --> CHOOSE_MENU
+
+    PROFIL --> EDIT_PROFIL --> SAVE_PROFIL --> PROFIL_SUCCESS --> CHOOSE_MENU
 
     LOGOUT --> STOP
 ```
@@ -739,67 +938,67 @@ flowchart TD
     LOGIN_FAIL["Tampilkan error login"]
     DASHBOARD["Tampilkan halaman Jadwal Pengambilan"]
     LOAD_JADWAL["Muat data jadwal dari server"]
-    SHOW_STATS["Tampilkan statistik (Hari Ini / Menunggu / Selesai)"]
+    SHOW_STATS["Tampilkan statistik"]
     CHECK_TODAY{"Ada tugas hari ini?"}
-    SHOW_TODAY["Tampilkan jadwal hari ini (highlight)"]
+    SHOW_TODAY["Tampilkan jadwal hari ini"]
     SHOW_UPCOMING["Tampilkan jadwal mendatang"]
 
     CHOOSE{"Pilih aksi"}
 
     KLIK_SELESAI["Klik 'Selesai' pada tugas"]
     MODAL_UPLOAD["Modal upload bukti tugas"]
-    UPLOAD_FILES["Upload file bukti (bisa multiple)"]
+    UPLOAD_FILES["Upload file bukti"]
     ADD_MORE{"Tambah file lagi?"}
     SUBMIT_TASK["Klik 'Kirim & Selesai'"]
     CHECK_FILES{"Minimal 1 file?"}
     FILE_ERROR["Error: Minimal 1 file bukti"]
     UPLOAD_LOOP["Upload semua file ke server"]
-    UPDATE_STATUS["Update jadwal status='submitted' + bukti paths"]
-    TASK_SUCCESS["Notifikasi: Menunggu verifikasi admin 🎉"]
+    UPDATE_STATUS["Update jadwal status='submitted'"]
+    TASK_SUCCESS["Menunggu verifikasi admin 🎉"]
 
     RIWAYAT["Klik menu Riwayat Tugas"]
-    LOAD_HISTORY["Muat riwayat tugas saya"]
-    SHOW_HISTORY["Tampilkan tabel riwayat (Tanggal, Bukti, Status)"]
+    SHOW_HISTORY["Tampilkan tabel riwayat"]
+
+    KOMPLAIN["Klik menu Komplain"]
+    INPUT_KOMPLAIN["Isi subjek dan pesan"]
+    SUBMIT_KOMPLAIN["Kirim komplain"]
+    KOMPLAIN_SUCCESS["Komplain berhasil dikirim"]
+    VIEW_KOMPLAIN["Lihat detail & balasan"]
+
+    PROFIL["Klik menu Profil"]
+    EDIT_PROFIL["Edit nama, phone, password"]
+    SAVE_PROFIL["Simpan perubahan"]
+    PROFIL_SUCCESS["Profil berhasil diperbarui"]
 
     LOGOUT["Logout"]
     STOP(("🔴 End"))
 
-    START --> LOGIN
-    LOGIN --> SHOW_LOGIN
-    SHOW_LOGIN --> INPUT_CRED
-    INPUT_CRED --> VALIDATE_LOGIN
-    VALIDATE_LOGIN -->|Tidak| LOGIN_FAIL
-    LOGIN_FAIL --> SHOW_LOGIN
+    START --> LOGIN --> SHOW_LOGIN --> INPUT_CRED --> VALIDATE_LOGIN
+    VALIDATE_LOGIN -->|Tidak| LOGIN_FAIL --> SHOW_LOGIN
     VALIDATE_LOGIN -->|Ya| DASHBOARD
 
-    DASHBOARD --> LOAD_JADWAL
-    LOAD_JADWAL --> SHOW_STATS
-    SHOW_STATS --> CHECK_TODAY
-    CHECK_TODAY -->|Ya| SHOW_TODAY
+    DASHBOARD --> LOAD_JADWAL --> SHOW_STATS --> CHECK_TODAY
+    CHECK_TODAY -->|Ya| SHOW_TODAY --> SHOW_UPCOMING --> CHOOSE
     CHECK_TODAY -->|Tidak| SHOW_UPCOMING
-    SHOW_TODAY --> SHOW_UPCOMING
-    SHOW_UPCOMING --> CHOOSE
 
     CHOOSE -->|Selesaikan Tugas| KLIK_SELESAI
     CHOOSE -->|Riwayat| RIWAYAT
+    CHOOSE -->|Komplain| KOMPLAIN
+    CHOOSE -->|Profil| PROFIL
     CHOOSE -->|Logout| LOGOUT
 
-    KLIK_SELESAI --> MODAL_UPLOAD
-    MODAL_UPLOAD --> UPLOAD_FILES
-    UPLOAD_FILES --> ADD_MORE
+    KLIK_SELESAI --> MODAL_UPLOAD --> UPLOAD_FILES --> ADD_MORE
     ADD_MORE -->|Ya| UPLOAD_FILES
-    ADD_MORE -->|Tidak| SUBMIT_TASK
-    SUBMIT_TASK --> CHECK_FILES
-    CHECK_FILES -->|Tidak| FILE_ERROR
-    FILE_ERROR --> MODAL_UPLOAD
-    CHECK_FILES -->|Ya| UPLOAD_LOOP
-    UPLOAD_LOOP --> UPDATE_STATUS
-    UPDATE_STATUS --> TASK_SUCCESS
-    TASK_SUCCESS --> DASHBOARD
+    ADD_MORE -->|Tidak| SUBMIT_TASK --> CHECK_FILES
+    CHECK_FILES -->|Tidak| FILE_ERROR --> MODAL_UPLOAD
+    CHECK_FILES -->|Ya| UPLOAD_LOOP --> UPDATE_STATUS --> TASK_SUCCESS --> DASHBOARD
 
-    RIWAYAT --> LOAD_HISTORY
-    LOAD_HISTORY --> SHOW_HISTORY
-    SHOW_HISTORY --> CHOOSE
+    RIWAYAT --> SHOW_HISTORY --> CHOOSE
+
+    KOMPLAIN --> INPUT_KOMPLAIN --> SUBMIT_KOMPLAIN --> KOMPLAIN_SUCCESS --> CHOOSE
+    KOMPLAIN --> VIEW_KOMPLAIN --> CHOOSE
+
+    PROFIL --> EDIT_PROFIL --> SAVE_PROFIL --> PROFIL_SUCCESS --> CHOOSE
 
     LOGOUT --> STOP
 ```
@@ -829,12 +1028,12 @@ flowchart TD
 
     %% Manajemen Warga
     WARGA["Menu: Manajemen Warga"]
-    LOAD_WARGA["Muat data warga (role=user)"]
+    LOAD_WARGA["Muat data warga"]
     SHOW_WARGA["Tampilkan tabel warga"]
     WARGA_ACTION{"Aksi warga?"}
-    ADD_WARGA["Tambah warga baru (form → POST)"]
-    EDIT_WARGA["Edit data warga (form → PUT)"]
-    DELETE_WARGA["Hapus warga (konfirmasi → DELETE)"]
+    ADD_WARGA["Tambah warga baru"]
+    EDIT_WARGA["Edit data warga"]
+    DELETE_WARGA["Hapus warga"]
 
     %% Manajemen Petugas
     PETUGAS["Menu: Manajemen Petugas"]
@@ -850,35 +1049,42 @@ flowchart TD
     LOAD_JADWAL["Muat data jadwal"]
     SHOW_JADWAL["Tampilkan tugas submitted + semua jadwal"]
     JADWAL_ACTION{"Aksi jadwal?"}
-    ADD_JADWAL["Tambah jadwal baru (tanggal → POST)"]
+    ADD_JADWAL["Tambah jadwal baru"]
     VALIDATE_TASK["Validasi bukti tugas petugas"]
-    APPROVE_TASK["Setujui tugas → status='verified'"]
-    REJECT_TASK["Tolak tugas → status='rejected'"]
+    APPROVE_TASK["Setujui tugas"]
+    REJECT_TASK["Tolak tugas"]
 
     %% Laporan
     LAPORAN["Menu: Laporan Transaksi"]
-    LOAD_LAPORAN["Muat semua transaksi + filter status"]
-    SHOW_LAPORAN["Tampilkan tabel laporan lengkap"]
+    LOAD_LAPORAN["Muat semua transaksi + filter"]
+    SHOW_LAPORAN["Tampilkan tabel laporan"]
+
+    %% Komplain
+    KOMPLAIN_MENU["Menu: Komplain Masuk"]
+    LOAD_KOMPLAIN["Muat semua komplain"]
+    SHOW_KOMPLAIN["Tampilkan statistik + tabel komplain"]
+    VIEW_KOMPLAIN["Klik 'Tanggapi'"]
+    REPLY_KOMPLAIN["Tulis balasan + ubah status"]
+    SAVE_REPLY["Simpan balasan"]
 
     %% Settings
     SETTINGS["Menu: Pengaturan"]
-    LOAD_QRIS["Muat gambar QRIS saat ini"]
-    SHOW_QRIS["Preview QRIS / 'Belum ada'"]
+    LOAD_QRIS["Muat gambar QRIS"]
+    SHOW_QRIS["Preview QRIS"]
     UPLOAD_QRIS["Upload gambar QRIS baru"]
     SAVE_QRIS["Simpan path ke settings"]
 
     LOGOUT["Logout"]
     STOP(("🔴 End"))
 
-    START --> LOGIN
-    LOGIN --> DASHBOARD
-    DASHBOARD --> CHOOSE
+    START --> LOGIN --> DASHBOARD --> CHOOSE
 
     CHOOSE -->|Verifikasi| VERIFY
     CHOOSE -->|Warga| WARGA
     CHOOSE -->|Petugas| PETUGAS
     CHOOSE -->|Jadwal| JADWAL
     CHOOSE -->|Laporan| LAPORAN
+    CHOOSE -->|Komplain| KOMPLAIN_MENU
     CHOOSE -->|Pengaturan| SETTINGS
     CHOOSE -->|Logout| LOGOUT
 
@@ -906,6 +1112,9 @@ flowchart TD
 
     LAPORAN --> LOAD_LAPORAN --> SHOW_LAPORAN --> CHOOSE
 
+    KOMPLAIN_MENU --> LOAD_KOMPLAIN --> SHOW_KOMPLAIN --> VIEW_KOMPLAIN
+    VIEW_KOMPLAIN --> REPLY_KOMPLAIN --> SAVE_REPLY --> CHOOSE
+
     SETTINGS --> LOAD_QRIS --> SHOW_QRIS --> UPLOAD_QRIS --> SAVE_QRIS --> CHOOSE
 
     LOGOUT --> STOP
@@ -926,6 +1135,6 @@ flowchart TD
 
 | Aktor | Fitur Utama |
 |-------|-------------|
-| **Warga** | Dashboard, Bayar QRIS, Upload Bukti, Riwayat Transaksi, Profil |
-| **Petugas Kebersihan** | Jadwal Pengambilan, Konfirmasi Tugas + Upload Bukti, Riwayat Tugas |
-| **Admin** | Verifikasi Pembayaran, CRUD Warga, CRUD Petugas, Kelola Jadwal, Validasi Tugas, Laporan, Pengaturan QRIS |
+| **Warga** | Registrasi Akun, Dashboard, Bayar QRIS, Upload Bukti, Riwayat Transaksi, Komplain, Edit Profil |
+| **Petugas Kebersihan** | Jadwal Pengambilan, Konfirmasi Tugas + Upload Bukti, Riwayat Tugas, Komplain, Edit Profil |
+| **Admin** | Verifikasi Pembayaran, CRUD Warga, CRUD Petugas, Kelola Jadwal, Validasi Tugas, Laporan, Kelola Komplain, Pengaturan QRIS |

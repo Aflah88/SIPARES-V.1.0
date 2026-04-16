@@ -65,7 +65,7 @@ function handlePost() {
     $db = getDB();
 
     $bulan = $data['bulan'] ?? '';
-    $jumlah = $data['jumlah'] ?? 25000;
+    $jumlah = $data['jumlah'] ?? 20000;
     $tanggal = $data['tanggal'] ?? date('Y-m-d');
     $bukti = $data['bukti'] ?? null;
 

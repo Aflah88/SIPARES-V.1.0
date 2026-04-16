@@ -24,6 +24,23 @@ switch ($method) {
 }
 
 function handleGet() {
+    $action = $_GET['action'] ?? '';
+
+    // Allow any authenticated user to get their own profile
+    if ($action === 'profile') {
+        $user = requireAuth();
+        $db = getDB();
+        $stmt = $db->prepare("SELECT id, nama, username, phone, rt, rw, alamat, role, created_at FROM users WHERE id = ?");
+        $stmt->execute([$user['id']]);
+        $profile = $stmt->fetch();
+        if ($profile) {
+            jsonResponse(['success' => true, 'data' => $profile]);
+        } else {
+            jsonResponse(['success' => false, 'message' => 'User not found'], 404);
+        }
+    }
+
+    // All other GET requests require admin
     requireAuth(['admin']);
     $db = getDB();
 
@@ -97,6 +114,53 @@ function handlePost() {
 }
 
 function handlePut() {
+    $action = $_GET['action'] ?? '';
+
+    // Allow any authenticated user to update their own profile
+    if ($action === 'update-profile') {
+        $user = requireAuth();
+        $data = getRequestBody();
+        $db = getDB();
+
+        $fields = [];
+        $params = [];
+
+        if (isset($data['nama']) && !empty(trim($data['nama']))) { $fields[] = "nama = ?"; $params[] = trim($data['nama']); }
+        if (isset($data['phone'])) { $fields[] = "phone = ?"; $params[] = trim($data['phone']); }
+        if (isset($data['rt'])) { $fields[] = "rt = ?"; $params[] = trim($data['rt']); }
+        if (isset($data['rw'])) { $fields[] = "rw = ?"; $params[] = trim($data['rw']); }
+        if (isset($data['alamat'])) { $fields[] = "alamat = ?"; $params[] = trim($data['alamat']); }
+        if (!empty($data['password'])) {
+            if (strlen($data['password']) < 6) {
+                jsonResponse(['success' => false, 'message' => 'Password minimal 6 karakter'], 400);
+            }
+            $fields[] = "password = ?";
+            $params[] = password_hash($data['password'], PASSWORD_DEFAULT);
+        }
+
+        if (empty($fields)) {
+            jsonResponse(['success' => false, 'message' => 'Tidak ada data untuk diupdate'], 400);
+        }
+
+        $params[] = $user['id'];
+        $sql = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+
+        // Return updated profile data for session cache refresh
+        $stmt2 = $db->prepare("SELECT id, nama, username, phone, rt, rw, alamat, role, created_at FROM users WHERE id = ?");
+        $stmt2->execute([$user['id']]);
+        $updated = $stmt2->fetch();
+
+        // Update session
+        if ($updated) {
+            $_SESSION['user'] = $updated;
+        }
+
+        jsonResponse(['success' => true, 'message' => 'Profil berhasil diperbarui', 'data' => $updated]);
+    }
+
+    // Admin-only: update any user
     requireAuth(['admin']);
     $id = $_GET['id'] ?? null;
 

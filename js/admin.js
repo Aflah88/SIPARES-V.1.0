@@ -28,6 +28,10 @@ const AdminModule = {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
         Laporan Transaksi
       </div>
+      <div class="sidebar-nav-item ${this.currentSection === 'komplain' ? 'active' : ''}" onclick="AdminModule.navigate('komplain')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Komplain Masuk
+      </div>
       <div class="sidebar-nav-item ${this.currentSection === 'settings' ? 'active' : ''}" onclick="AdminModule.navigate('settings')">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Pengaturan
@@ -47,6 +51,7 @@ const AdminModule = {
       case 'warga': return await this.renderWarga();
       case 'petugas-manage': return await this.renderPetugasManage();
       case 'laporan': return await this.renderLaporan();
+      case 'komplain': return await this.renderKomplain();
       case 'settings': return await this.renderSettings();
       default: return await this.renderVerify();
     }
@@ -156,7 +161,19 @@ const AdminModule = {
            <p style="color:var(--text-muted); font-size:0.88rem;">Bukti pembayaran telah diupload oleh warga</p>
          </div>`;
 
-    App.showModal('Verifikasi Pembayaran', `
+    const isPending = trx.status === 'pending';
+    const actionsHtml = isPending ? `
+      <button class="btn btn-danger" onclick="AdminModule.rejectPayment(${trx.id})">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+        Tolak
+      </button>
+      <button class="btn btn-success" onclick="AdminModule.approvePayment(${trx.id})">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        Setujui
+      </button>
+    ` : `<button class="btn btn-outline" onclick="App.closeModal()">Tutup</button>`;
+
+    App.showModal(isPending ? 'Verifikasi Pembayaran' : 'Detail Pembayaran', `
       <div class="proof-viewer">
         ${proofImg}
         <div class="proof-details">
@@ -182,16 +199,7 @@ const AdminModule = {
           </div>
         </div>
       </div>
-    `, `
-      <button class="btn btn-danger" onclick="AdminModule.rejectPayment(${trx.id})">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-        Tolak
-      </button>
-      <button class="btn btn-success" onclick="AdminModule.approvePayment(${trx.id})">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
-        Setujui
-      </button>
-    `);
+    `, actionsHtml);
   },
 
   async approvePayment(trxId) {
@@ -597,6 +605,9 @@ const AdminModule = {
         <td style="font-weight:600; color:var(--emerald-400)">${DataStore.formatCurrency(t.jumlah)}</td>
         <td>${DataStore.formatDate(t.tanggal)}</td>
         <td>${statusBadge(t.status)}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="AdminModule.viewProof(${t.id})">Lihat Bukti</button>
+        </td>
       </tr>
     `).join('');
 
@@ -624,6 +635,7 @@ const AdminModule = {
                   <th>Jumlah</th>
                   <th>Tanggal</th>
                   <th>Status</th>
+                  <th>Aksi</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
@@ -667,6 +679,11 @@ const AdminModule = {
         <td style="font-weight:600; color:var(--text-primary)">${DataStore.formatDate(j.tanggal)}</td>
         <td>${statusBadge(j.status)}</td>
         <td>${j.completed_by_name || '-'}</td>
+        <td>
+          ${['verified', 'rejected'].includes(j.status) && j.bukti && j.bukti.length > 0 
+            ? `<button class="btn btn-sm btn-outline" onclick="AdminModule.viewTaskProof(${j.id})">Detail</button>` 
+            : '-'}
+        </td>
       </tr>
     `).join('');
 
@@ -708,6 +725,7 @@ const AdminModule = {
                   <th>Tanggal</th>
                   <th>Status</th>
                   <th>Terakhir Dikerjakan Oleh</th>
+                  <th>Aksi</th>
                 </tr>
               </thead>
               <tbody>${otherRows || `<tr><td colspan="3" style="text-align:center">Belum ada jadwal.</td></tr>`}</tbody>
@@ -769,7 +787,17 @@ const AdminModule = {
       }).join('');
     }
 
-    App.showModal('Verifikasi Bukti Tugas', `
+    const isSubmitted = j.status === 'submitted';
+    const actionButtons = isSubmitted ? `
+      <button class="btn btn-danger" onclick="AdminModule.rejectTask(${j.id})">
+        Tolak
+      </button>
+      <button class="btn btn-success" onclick="AdminModule.approveTask(${j.id})">
+        Setujui
+      </button>
+    ` : `<button class="btn btn-outline" onclick="App.closeModal()">Tutup</button>`;
+
+    App.showModal(isSubmitted ? 'Verifikasi Bukti Tugas' : 'Detail Bukti Tugas', `
       <div class="proof-viewer" style="align-items:stretch">
         <div style="max-height: 400px; overflow-y: auto; text-align:center;">
           ${proofsHtml}
@@ -783,16 +811,15 @@ const AdminModule = {
             <span class="detail-label">Dilaporkan Oleh</span>
             <span class="detail-value">${j.completed_by_name || '-'}</span>
           </div>
+          ${j.keterangan ? `
+          <div class="detail-row" style="margin-top:8px; border-top:1px solid var(--border-color); padding-top:8px;">
+            <span class="detail-label" style="display:block; margin-bottom:4px;">Keterangan Tambahan</span>
+            <div style="font-size:0.9rem; color:var(--text-secondary); background:var(--bg-glass); padding:10px; border-radius:var(--radius-sm); white-space:pre-wrap;">${j.keterangan}</div>
+          </div>
+          ` : ''}
         </div>
       </div>
-    `, `
-      <button class="btn btn-danger" onclick="AdminModule.rejectTask(${j.id})">
-        Tolak
-      </button>
-      <button class="btn btn-success" onclick="AdminModule.approveTask(${j.id})">
-        Setujui
-      </button>
-    `);
+    `, actionButtons);
   },
 
   async approveTask(jadwalId) {
@@ -815,6 +842,166 @@ const AdminModule = {
       App.showToast(result.message || 'Gagal menolak', 'error');
     }
     this.navigate('jadwal');
+  },
+
+  // ── KOMPLAIN MASUK ──
+  async renderKomplain() {
+    const complaints = await DataStore.getComplaints();
+    const pending = complaints.filter(c => c.status === 'pending');
+    const responded = complaints.filter(c => c.status === 'ditanggapi');
+    const done = complaints.filter(c => c.status === 'selesai');
+
+    const statusBadge = (status) => {
+      const map = {
+        'pending': '<span class="badge badge-warning">Menunggu</span>',
+        'ditanggapi': '<span class="badge badge-info">Ditanggapi</span>',
+        'selesai': '<span class="badge badge-success">Selesai</span>',
+      };
+      return map[status] || status;
+    };
+
+    const roleBadge = (role) => {
+      if (role === 'user') return '<span class="badge badge-info" style="font-size:0.7rem;">Warga</span>';
+      if (role === 'petugas') return '<span class="badge badge-warning" style="font-size:0.7rem;">Petugas</span>';
+      return role;
+    };
+
+    return `
+      <div class="stats-grid fade-in">
+        <div class="stat-card yellow">
+          <div class="stat-card-header">
+            <span class="stat-card-label">Menunggu Balasan</span>
+            <div class="stat-card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+          </div>
+          <div class="stat-card-value">${pending.length}</div>
+          <div class="stat-card-desc">komplain perlu ditanggapi</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-card-header">
+            <span class="stat-card-label">Ditanggapi</span>
+            <div class="stat-card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+          </div>
+          <div class="stat-card-value">${responded.length}</div>
+          <div class="stat-card-desc">komplain sudah dibalas</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-card-header">
+            <span class="stat-card-label">Selesai</span>
+            <div class="stat-card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+          </div>
+          <div class="stat-card-value">${done.length}</div>
+          <div class="stat-card-desc">komplain terselesaikan</div>
+        </div>
+      </div>
+
+      <div class="card fade-in">
+        <div class="card-header">
+          <h3>Semua Komplain (${complaints.length})</h3>
+        </div>
+        <div class="card-body" style="padding:0;">
+          ${complaints.length > 0 ? `
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Dari</th>
+                  <th>Role</th>
+                  <th>Subjek</th>
+                  <th>Tanggal</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${complaints.map(c => `
+                <tr>
+                  <td style="font-weight:600; color:var(--text-primary)">${c.id}</td>
+                  <td style="font-weight:600; color:var(--text-primary)">${c.user_name}</td>
+                  <td>${roleBadge(c.user_role)}</td>
+                  <td>${c.subjek}</td>
+                  <td>${DataStore.formatDate(c.created_at)}</td>
+                  <td>${statusBadge(c.status)}</td>
+                  <td>
+                    <button class="btn btn-sm btn-primary" onclick="AdminModule.viewKomplain(${c.id})">Tanggapi</button>
+                  </td>
+                </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>` : `
+          <div class="empty-state">
+            <div style="font-size:3rem; margin-bottom:16px;">✅</div>
+            <h4>Tidak Ada Komplain</h4>
+            <p>Belum ada komplain yang masuk</p>
+          </div>`}
+        </div>
+      </div>
+    `;
+  },
+
+  async viewKomplain(id) {
+    const complaints = await DataStore.getComplaints();
+    const c = complaints.find(item => item.id == id);
+    if (!c) return;
+
+    App.showModal('Tanggapi Komplain', `
+      <div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Dari</div>
+          <div style="font-weight:600; font-size:1rem;">${c.user_name} <span style="font-size:0.8rem; color:var(--text-muted);">(${c.user_role === 'user' ? 'Warga' : 'Petugas'})</span></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Subjek</div>
+          <div style="font-weight:600; font-size:1rem;">${c.subjek}</div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Pesan</div>
+          <div style="font-size:0.9rem; color:var(--text-secondary); background:var(--bg-glass); padding:12px; border-radius:var(--radius-sm);">${c.pesan}</div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Tanggal: ${DataStore.formatDate(c.created_at)}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Balasan Admin</label>
+          <textarea class="form-input" id="komplain-balasan" rows="4" placeholder="Tulis balasan Anda..." style="resize:vertical; min-height:80px;">${c.balasan || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="komplain-status">
+            <option value="pending" ${c.status === 'pending' ? 'selected' : ''}>Menunggu</option>
+            <option value="ditanggapi" ${c.status === 'ditanggapi' ? 'selected' : ''}>Ditanggapi</option>
+            <option value="selesai" ${c.status === 'selesai' ? 'selected' : ''}>Selesai</option>
+          </select>
+        </div>
+      </div>
+    `, `
+      <button class="btn btn-outline" onclick="App.closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="AdminModule.replyKomplain(${c.id})">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+        Simpan Balasan
+      </button>
+    `);
+  },
+
+  async replyKomplain(id) {
+    const balasan = document.getElementById('komplain-balasan').value;
+    const status = document.getElementById('komplain-status').value;
+
+    const result = await DataStore.replyComplaint(id, { balasan, status });
+    App.closeModal();
+    if (result.success) {
+      App.showToast('Komplain berhasil ditanggapi!', 'success');
+    } else {
+      App.showToast(result.message || 'Gagal menyimpan balasan', 'error');
+    }
+    this.navigate('komplain');
   },
 
   // ── PENGATURAN APLIKASI ──

@@ -62,10 +62,115 @@ const App = {
             </button>
           </form>
 
+          <div style="text-align:center; margin-top:20px; padding-top:20px; border-top:1px solid var(--border-color);">
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;">Belum punya akun?</p>
+            <button class="btn btn-outline btn-block" onclick="App.renderRegister()" style="justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+              Buat Akun Warga
+            </button>
+          </div>
 
         </div>
       </div>
     `;
+  },
+
+  // ══════════════════════════════════════
+  //  REGISTER
+  // ══════════════════════════════════════
+  renderRegister() {
+    const root = document.getElementById('app');
+    root.innerHTML = `
+      <div class="bg-animated"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+
+      <div class="login-container">
+        <div class="login-card" style="max-width:500px;">
+          <div class="login-logo">
+            <div class="login-logo-icon">♻️</div>
+            <h1>SIPARES</h1>
+          </div>
+          <p class="login-subtitle">Buat Akun Warga Baru</p>
+
+          <form id="register-form" onsubmit="App.handleRegister(event)">
+            <div class="form-group">
+              <label class="form-label">Nama Lengkap</label>
+              <input type="text" class="form-input" id="reg-nama" placeholder="Masukkan nama lengkap" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input type="text" class="form-input" id="reg-username" placeholder="Minimal 3 karakter" required minlength="3">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-input" id="reg-password" placeholder="Minimal 6 karakter" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label class="form-label">No. Handphone</label>
+              <input type="tel" class="form-input" id="reg-phone" placeholder="08xxxxxxxxxx" required>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label class="form-label">RT</label>
+                <input type="text" class="form-input" id="reg-rt" placeholder="01" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">RW</label>
+                <input type="text" class="form-input" id="reg-rw" placeholder="05" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alamat</label>
+              <input type="text" class="form-input" id="reg-alamat" placeholder="Jl. ..." required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="btn-register" style="margin-top:8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+              Daftar
+            </button>
+          </form>
+
+          <div style="text-align:center; margin-top:20px; padding-top:20px; border-top:1px solid var(--border-color);">
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;">Sudah punya akun?</p>
+            <button class="btn btn-outline btn-block" onclick="App.renderLogin()" style="justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+              Kembali ke Login
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+  },
+
+  async handleRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-register');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Mendaftar...';
+
+    const data = {
+      nama: document.getElementById('reg-nama').value,
+      username: document.getElementById('reg-username').value,
+      password: document.getElementById('reg-password').value,
+      phone: document.getElementById('reg-phone').value,
+      rt: document.getElementById('reg-rt').value,
+      rw: document.getElementById('reg-rw').value,
+      alamat: document.getElementById('reg-alamat').value,
+    };
+
+    const result = await DataStore.register(data);
+    if (result.success) {
+      this.showToast('Registrasi berhasil! Silakan login.', 'success');
+      this.renderLogin();
+    } else {
+      this.showToast(result.message || 'Registrasi gagal', 'error');
+      btn.disabled = false;
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg> Daftar`;
+    }
   },
 
   async handleLogin(e) {
@@ -208,12 +313,15 @@ const App = {
         'warga': { title: 'Manajemen Warga', desc: 'Tambah, edit, dan hapus data warga' },
         'petugas-manage': { title: 'Manajemen Petugas', desc: 'Tambah, edit, dan hapus data petugas' },
         'laporan': { title: 'Laporan Transaksi', desc: 'Semua riwayat transaksi pembayaran' },
+        'komplain': { title: 'Komplain Masuk', desc: 'Kelola komplain dari warga dan petugas' },
       };
       return map[module.currentSection] || map['verify'];
     } else if (role === 'petugas') {
       const map = {
         'jadwal': { title: 'Jadwal Pengambilan', desc: 'Jadwal dan konfirmasi pengambilan sampah' },
         'riwayat': { title: 'Riwayat Tugas', desc: 'Daftar tugas yang sudah diselesaikan' },
+        'komplain': { title: 'Komplain', desc: 'Kirim dan lihat status komplain Anda' },
+        'profil': { title: 'Profil Saya', desc: 'Informasi dan pengaturan akun Anda' },
       };
       return map[module.currentSection] || map['jadwal'];
     } else {
@@ -221,7 +329,8 @@ const App = {
         'dashboard': { title: 'Dashboard', desc: 'Ringkasan pembayaran retribusi sampah Anda' },
         'bayar': { title: 'Bayar QRIS', desc: 'Lakukan pembayaran retribusi via QRIS' },
         'riwayat': { title: 'Riwayat Transaksi', desc: 'Semua riwayat pembayaran Anda' },
-        'profil': { title: 'Profil Saya', desc: 'Informasi akun Anda' },
+        'komplain': { title: 'Komplain', desc: 'Kirim dan lihat status komplain Anda' },
+        'profil': { title: 'Profil Saya', desc: 'Informasi dan pengaturan akun Anda' },
       };
       return map[module.currentSection] || map['dashboard'];
     }

@@ -20,6 +20,10 @@ const UserModule = {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Riwayat Transaksi
       </div>
+      <div class="sidebar-nav-item ${this.currentSection === 'komplain' ? 'active' : ''}" onclick="UserModule.navigate('komplain')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Komplain
+      </div>
       <div class="sidebar-nav-item ${this.currentSection === 'profil' ? 'active' : ''}" onclick="UserModule.navigate('profil')">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
         Profil Saya
@@ -37,7 +41,8 @@ const UserModule = {
       case 'dashboard': return await this.renderDashboard();
       case 'bayar': return this.renderBayar();
       case 'riwayat': return await this.renderRiwayat();
-      case 'profil': return this.renderProfil();
+      case 'komplain': return await this.renderKomplain();
+      case 'profil': return await this.renderProfil();
       default: return await this.renderDashboard();
     }
   },
@@ -169,7 +174,7 @@ const UserModule = {
                 <h4>QRIS - Retribusi Sampah</h4>
                 <p class="qris-merchant">Desa/Kelurahan Sejahtera</p>
                 ${qrisContent}
-                <div class="qris-amount">Rp 25.000</div>
+                <div class="qris-amount">Rp 20.000</div>
                 <div class="qris-label">Retribusi Sampah Bulanan</div>
               </div>
             </div>
@@ -178,7 +183,7 @@ const UserModule = {
                 <h4>Cara Pembayaran</h4>
                 <div class="qris-step"><div class="qris-step-num">1</div><p>Buka aplikasi e-wallet atau m-banking yang mendukung QRIS</p></div>
                 <div class="qris-step"><div class="qris-step-num">2</div><p>Scan QR code yang ditampilkan di sebelah kiri</p></div>
-                <div class="qris-step"><div class="qris-step-num">3</div><p>Pastikan nominal pembayaran <strong>Rp 25.000</strong></p></div>
+                <div class="qris-step"><div class="qris-step-num">3</div><p>Pastikan nominal pembayaran <strong>Rp 20.000</strong></p></div>
                 <div class="qris-step"><div class="qris-step-num">4</div><p>Selesaikan pembayaran dan screenshot buktinya</p></div>
                 <div class="qris-step"><div class="qris-step-num">5</div><p>Upload bukti pembayaran di bawah ini</p></div>
               </div>
@@ -272,7 +277,7 @@ const UserModule = {
     // Create transaction
     const result = await DataStore.addTransaction({
       bulan: bulanIni,
-      jumlah: 25000,
+      jumlah: 20000,
       tanggal: now.toISOString().split('T')[0],
       bukti: buktiPath,
     });
@@ -344,29 +349,223 @@ const UserModule = {
     `;
   },
 
-  // ── PROFIL ──
-  renderProfil() {
-    const session = DataStore.getSession();
-    const initials = session.nama.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  // ── KOMPLAIN ──
+  async renderKomplain() {
+    const complaints = await DataStore.getComplaints();
+
+    const statusBadge = (status) => {
+      const map = {
+        'pending': '<span class="badge badge-warning">Menunggu</span>',
+        'ditanggapi': '<span class="badge badge-info">Ditanggapi</span>',
+        'selesai': '<span class="badge badge-success">Selesai</span>',
+      };
+      return map[status] || status;
+    };
+
+    return `
+      <div class="card fade-in mb-3">
+        <div class="card-header">
+          <h3>Kirim Komplain Baru</h3>
+        </div>
+        <div class="card-body">
+          <form id="form-komplain" onsubmit="UserModule.submitKomplain(event)">
+            <div class="form-group">
+              <label class="form-label">Subjek</label>
+              <input type="text" class="form-input" id="komplain-subjek" placeholder="Masukkan subjek komplain" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pesan</label>
+              <textarea class="form-input" id="komplain-pesan" rows="4" placeholder="Jelaskan keluhan Anda secara detail..." required style="resize:vertical; min-height:100px;"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-komplain">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+              Kirim Komplain
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card fade-in">
+        <div class="card-header">
+          <h3>Riwayat Komplain Saya (${complaints.length})</h3>
+        </div>
+        <div class="card-body" style="padding:0;">
+          ${complaints.length > 0 ? `
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Subjek</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${complaints.map(c => `
+                <tr>
+                  <td>${DataStore.formatDate(c.created_at)}</td>
+                  <td style="font-weight:600; color:var(--text-primary)">${c.subjek}</td>
+                  <td>${statusBadge(c.status)}</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline" onclick="UserModule.viewKomplain(${c.id})">Detail</button>
+                  </td>
+                </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>` : `
+          <div class="empty-state">
+            <div style="font-size:3rem; margin-bottom:16px;">💬</div>
+            <h4>Belum Ada Komplain</h4>
+            <p>Kirim komplain pertama Anda menggunakan form di atas</p>
+          </div>`}
+        </div>
+      </div>
+    `;
+  },
+
+  async submitKomplain(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-komplain');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Mengirim...';
+
+    const result = await DataStore.addComplaint({
+      subjek: document.getElementById('komplain-subjek').value,
+      pesan: document.getElementById('komplain-pesan').value,
+    });
+
+    if (result.success) {
+      App.showToast('Komplain berhasil dikirim!', 'success');
+      this.navigate('komplain');
+    } else {
+      App.showToast(result.message || 'Gagal mengirim komplain', 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Kirim Komplain';
+    }
+  },
+
+  viewKomplain(id) {
+    DataStore.getComplaints().then(complaints => {
+      const c = complaints.find(item => item.id == id);
+      if (!c) return;
+
+      const balasanHtml = c.balasan
+        ? `<div style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); border-radius:var(--radius-sm); padding:16px; margin-top:16px;">
+             <div style="font-weight:600; font-size:0.85rem; color:var(--emerald-400); margin-bottom:8px;">Balasan Admin:</div>
+             <p style="font-size:0.9rem; color:var(--text-primary);">${c.balasan}</p>
+           </div>`
+        : `<p style="color:var(--text-muted); font-size:0.85rem; margin-top:16px; font-style:italic;">Belum ada balasan dari admin.</p>`;
+
+      App.showModal('Detail Komplain', `
+        <div>
+          <div style="margin-bottom:16px;">
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Subjek</div>
+            <div style="font-weight:600; font-size:1rem;">${c.subjek}</div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Pesan</div>
+            <div style="font-size:0.9rem; color:var(--text-secondary); background:var(--bg-glass); padding:12px; border-radius:var(--radius-sm);">${c.pesan}</div>
+          </div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <div><span style="font-size:0.8rem; color:var(--text-muted);">Tanggal:</span> <span style="font-size:0.85rem;">${DataStore.formatDate(c.created_at)}</span></div>
+            <div><span style="font-size:0.8rem; color:var(--text-muted);">Status:</span> ${c.status === 'pending' ? '<span class="badge badge-warning">Menunggu</span>' : c.status === 'ditanggapi' ? '<span class="badge badge-info">Ditanggapi</span>' : '<span class="badge badge-success">Selesai</span>'}</div>
+          </div>
+          ${balasanHtml}
+        </div>
+      `, `
+        <button class="btn btn-outline" onclick="App.closeModal()">Tutup</button>
+      `);
+    });
+  },
+
+  // ── PROFIL (Editable) ──
+  async renderProfil() {
+    const profile = await DataStore.getProfile();
+    if (!profile) return '<div class="empty-state"><h4>Gagal memuat profil</h4></div>';
+
+    const initials = profile.nama.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
     return `
       <div class="card profile-card fade-in">
         <div class="profile-header">
           <div class="profile-avatar">${initials}</div>
           <div>
-            <div class="profile-name">${session.nama}</div>
+            <div class="profile-name">${profile.nama}</div>
             <div class="profile-role">Warga</div>
           </div>
         </div>
-        <div class="profile-details">
-          <div class="profile-row"><label>Nama Lengkap</label><span>${session.nama}</span></div>
-          <div class="profile-row"><label>No. Handphone</label><span>${session.phone || '-'}</span></div>
-          <div class="profile-row"><label>RT</label><span>${session.rt || '-'}</span></div>
-          <div class="profile-row"><label>RW</label><span>${session.rw || '-'}</span></div>
-          <div class="profile-row"><label>Alamat</label><span>${session.alamat || '-'}</span></div>
-          <div class="profile-row"><label>Username</label><span>${session.username}</span></div>
+        <div class="card-body">
+          <form id="form-profile" onsubmit="UserModule.saveProfile(event)">
+            <div class="form-group">
+              <label class="form-label">Nama Lengkap</label>
+              <input type="text" class="form-input" id="profile-nama" value="${profile.nama}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">No. Handphone</label>
+              <input type="tel" class="form-input" id="profile-phone" value="${profile.phone || ''}">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label class="form-label">RT</label>
+                <input type="text" class="form-input" id="profile-rt" value="${profile.rt || ''}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">RW</label>
+                <input type="text" class="form-input" id="profile-rw" value="${profile.rw || ''}">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alamat</label>
+              <input type="text" class="form-input" id="profile-alamat" value="${profile.alamat || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input type="text" class="form-input" value="${profile.username}" disabled style="opacity:0.6;">
+              <small style="color:var(--text-muted); font-size:0.75rem;">Username tidak dapat diubah</small>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password Baru <span style="color:var(--text-muted); font-weight:400;">(kosongkan jika tidak ingin mengubah)</span></label>
+              <input type="password" class="form-input" id="profile-password" placeholder="Minimal 6 karakter" minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-save-profile" style="margin-top:8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Simpan Perubahan
+            </button>
+          </form>
         </div>
       </div>
     `;
+  },
+
+  async saveProfile(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-profile');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Menyimpan...';
+
+    const updates = {
+      nama: document.getElementById('profile-nama').value,
+      phone: document.getElementById('profile-phone').value,
+      rt: document.getElementById('profile-rt').value,
+      rw: document.getElementById('profile-rw').value,
+      alamat: document.getElementById('profile-alamat').value,
+    };
+
+    const password = document.getElementById('profile-password').value;
+    if (password) {
+      updates.password = password;
+    }
+
+    const result = await DataStore.updateProfile(updates);
+    if (result.success) {
+      App.showToast('Profil berhasil diperbarui!', 'success');
+      this.navigate('profil');
+    } else {
+      App.showToast(result.message || 'Gagal memperbarui profil', 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Simpan Perubahan';
+    }
   },
 };

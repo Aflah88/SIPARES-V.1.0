@@ -198,6 +198,55 @@ const DataStore = {
     return result;
   },
 
+  // ── REGISTRATION (Public - Warga only) ──
+  async register(data) {
+    const result = await this.api('register.php', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return result;
+  },
+
+  // ── COMPLAINTS ──
+  async getComplaints() {
+    const result = await this.api('complaints.php');
+    return result.success ? result.data : [];
+  },
+
+  async addComplaint(data) {
+    const result = await this.api('complaints.php', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return result;
+  },
+
+  async replyComplaint(id, data) {
+    const result = await this.api(`complaints.php?id=${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return result;
+  },
+
+  // ── PROFILE (Self-update) ──
+  async getProfile() {
+    const result = await this.api('users.php?action=profile');
+    return result.success ? result.data : null;
+  },
+
+  async updateProfile(updates) {
+    const result = await this.api('users.php?action=update-profile', {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    // Update cached session if successful
+    if (result.success && result.data) {
+      this._session = result.data;
+    }
+    return result;
+  },
+
   // ── FORMAT HELPERS (unchanged) ──
   formatCurrency(amount) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
